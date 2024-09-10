@@ -66,17 +66,137 @@ main:
     mov ss, ax      ; Set SS (stack segment) to 0
     mov sp, 0x7C00  ; Set SP (stack pointer) to the top of the boot sector
 
+
+
+    mov [ebr_drive_number], dl
+
+    mov ax,1
+    mov cl,1
+    mov bx, 0x7E00
+    call disk_read
+
     ; Print "Hello World!" message
     mov si, msg_hello ; Load address of the "Hello World!" message into SI
     call puts       ; Call the puts subroutine to print the message
 
+    cli
     hlt             ; Halt the CPU (end of execution)
 
+floppy_error:
+    mov si, msg_read_failed
+    call puts
+    jmp wait_key_and_reboot
+
+wait_key_and_reboot:
+    ; wait for a kepress and reboot
+    mov ah, 0
+    int 16h         ; wait for a key press
+    jmp 0FFFFh:0    ; Jump to begining of BIOS (technically reboot)
+
 .halt:
-    jmp .halt       ; Infinite loop to keep the CPU halted
+    cli        ; Disable interrupts, CPU can't be interrupted 
+    hlt       ; Infinite loop to keep the CPU halted
+
+
+;Disk routines
+
+; Convert LBA to CHS
+; Parameters:
+; - AX = LBA
+; Returns:
+; - CX [bits 0-5] - sector number
+; - CX [bits 6-15] - cylinder number
+; - DH - head number
+lba_to_chs:
+
+    push ax
+    push dx
+    xor dx, dx                          ; DX = 0 
+    div word [bdb_sectors_per_track]    ; AX = AX / bdb_sectors_per_track
+                                        ; DX = AX % bdb_sectors_per_track
+    inc dx
+    mov cx,dx
+
+    xor dx, dx
+    div word [bdb_heads]                ; AX = AX / bdb_heads
+                                        ; DX = AX % bdb_heads
+    mov dh,dl                           ; DH = DX (lower byte of DX in DH)
+    mov ch,al                           ; CH = AX (upper byte of AX in CH)
+    shl ah, 6
+    or cl, ah                           ; Put the upper 2 bits of CX in CL 
+
+    pop ax
+    mov dl, al                          ; Restore DL
+    pop ax
+    ret
+
+; Read sectors from disk
+; Parameters:
+; - AX = LBA
+; - CL = number of sectors to read
+; - DL = drive number
+; - ES:BX = destination buffer
+
+disk_read:
+
+    push ax
+    push bx
+    push cx
+    push dx
+    push di
+
+    push cx                 ; Save as it will be overriden
+    call lba_to_chs         ; Convert LBA to CHS
+    pop ax                  ; Now, AL is the number of sectors to read
+
+    mov ah, 02h
+
+    ; retry loop
+    mov di, 5
+
+.retry:
+    pusha           ; Save all registers, we dont know if BIOS will midify them or not
+    stc             ; Set carry flag, some BIOS don't so we do it explicitly 
+    int 13h         ; Clears the cary flag if working
+    jnc .done
+    
+    ; read failed
+
+    popa
+    call disk_read
+
+    dec di
+    test di,di
+    jnz .retry
+
+.fail:
+    ; all atempts failed
+    jmp floppy_error
+
+.done:
+    popa
+    pop di
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+
+; Resets the disk
+; Parameters:
+; - DL = drive number
+disk_reset:
+    pusha
+    mov ah, 0
+    stc
+    int 13h
+    jc floppy_error
+    popa 
+    ret
+
 
 msg_hello: db "Hello World!", ENDL, 0 ; Define the "Hello World!" message with a newline and null terminator
-
+msg_read_failed: db "Read from Disk failed!", ENDL, 0 ; Define the "Read failed!" message with a newline and null terminator
 ; Pad the boot sector to 510 bytes with zeros
 times 510 - ($ - $$) db 0 
 
