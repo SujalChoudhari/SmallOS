@@ -1,13 +1,16 @@
 # Define the assembler to be used
 ASM=nasm
-
+CC = gcc
 # Define the source and build directories
 SRC_DIR=src
 BUILD_DIR=build
+TOOLS_DIR=tools
 
 # Declare phony targets (targets that don't create files)
-.PHONY: all floppy_image kernel bootloader clean always
+.PHONY: all floppy_image kernel bootloader clean always tools_fat
 
+
+all: floppy_image tools_fat
 
 # Target to create a floppy image
 floppy_image: $(BUILD_DIR)/main_floppy.img
@@ -25,6 +28,7 @@ $(BUILD_DIR)/main_floppy.img: bootloader kernel
 	
 	# Copy the kernel binary to the floppy image (root directory)
 	mcopy -i $(BUILD_DIR)/main_floppy.img $(BUILD_DIR)/kernel.bin "::kernel.bin"
+	mcopy -i $(BUILD_DIR)/main_floppy.img test.txt "::test.txt"
 
 # Target to assemble the bootloader
 bootloader: $(BUILD_DIR)/bootloader.bin
@@ -43,10 +47,18 @@ $(BUILD_DIR)/kernel.bin: always
 	# Assemble the kernel source file into a binary
 	$(ASM) $(SRC_DIR)/kernel/main.asm -f bin -o $(BUILD_DIR)/kernel.bin
 
+
+# Tools
+tools_fat: $(BUILD_DIR)/tools/fat
+$(BUILD_DIR)/tools/fat: $(TOOLS_DIR)/fat/fat.c
+	$(CC) -g -o $(BUILD_DIR)/tools/fat $(TOOLS_DIR)/fat/fat.c
+	chmod +x $(BUILD_DIR)/tools/fat
+
 # Target to ensure the build directory exists
 always:
 	# Create the build directory if it does not exist
 	mkdir -p $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)/tools
 
 
 # Target to clean the build directory

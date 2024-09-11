@@ -14,7 +14,7 @@ bdb_bytes_per_sector:       dw 512                  ; Bytes per sector (2 bytes)
 bdb_sectors_per_cluster:    db 1                    ; Sectors per cluster (1 byte)
 bdb_reserved_sectors:       dw 1                    ; Number of reserved sectors (2 bytes)
 bdb_fat_count:              db 2                    ; Number of File Allocation Tables (FATs) (1 byte)
-bdb_dir_entries_count:      dw 0E0h                 ; Number of root directory entries (2 bytes)
+bdb_dir_entries_count:      dw 224                  ; Number of root directory entries (2 bytes)
 bdb_total_sectors:          dw 2880                 ; Total number of sectors (2 bytes), 2880 sectors * 512 bytes = 1.44MB
 bdb_media_descriptor_type:  db 0F0h                 ; Media descriptor type (1 byte), 0xF0 for 3.5" floppy disk
 bdb_sectors_per_fat:        dw 9                    ; Sectors per FAT (2 bytes)
