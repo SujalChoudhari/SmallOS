@@ -187,7 +187,8 @@ start:
     jmp .load_stage2_loop
 
 .read_finish:
-    
+    mov si, msg_working
+    call puts
     ; jump to our stage2
     mov dl, [ebr_drive_number]          ; boot device in dl
 
@@ -363,8 +364,10 @@ disk_reset:
 
 
 msg_loading:            db 'IB01', ENDL, 0        ; Info Bootloader  : Loading
-msg_read_failed:        db 'EB02', ENDL, 0        ; Error Bootloader : Read failed from disk
-msg_stage2_not_found:   db 'EB03', ENDL, 0        ; Error Bootloader : stage2 not found
+msg_working:            db 'IB02', ENDL, 0        ; Info Bootloader  : Loading
+
+msg_read_failed:        db 'EB01', ENDL, 0        ; Error Bootloader : Read failed from disk
+msg_stage2_not_found:   db 'EB02', ENDL, 0        ; Error Bootloader : stage2 not found
 file_stage2_bin:        db 'STAGE2  BIN'                        
 stage2_cluster:         dw 0
 
