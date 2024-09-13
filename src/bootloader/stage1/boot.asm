@@ -365,7 +365,7 @@ disk_reset:
 msg_loading:            db 'IB01', ENDL, 0        ; Info Bootloader  : Loading
 msg_read_failed:        db 'EB02', ENDL, 0        ; Error Bootloader : Read failed from disk
 msg_kernel_not_found:   db 'EB03', ENDL, 0        ; Error Bootloader : Kernel not found
-file_kernel_bin:        db 'KERNEL  BIN'                        
+file_kernel_bin:        db 'STAGE2  BIN'                        
 kernel_cluster:         dw 0
 
 KERNEL_LOAD_SEGMENT     equ 0x2000
