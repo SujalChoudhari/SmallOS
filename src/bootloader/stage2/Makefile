@@ -1,55 +1,43 @@
-BUILD_DIR ?= build/
-DEBUG_DIR ?= $(BUILD_DIR)/debug
-ASM ?= nasm
-CC ?= gcc
-CXX ?= g++          # Added for C++ compilation
-LD ?= ld
-CFLAGS ?= -ffreestanding -m32 -Wall -Wextra
-CXXFLAGS ?= -ffreestanding -m32 -Wall -Wextra  # C++ flags
-ASMFLAGS ?= -f elf32
-LDFLAGS ?= -T linker.ld -m elf_i386
-MAPFILE := $(DEBUG_DIR)/stage2.map
+BUILD_DIR?=build/
+ASM?=nasm
+ASMFLAGS?=-f obj
+CC16?=/usr/bin/watcom/binl64/wcc
+CFLAGS16?=-4 -d3 -s -wx -ms -zl -zq
+LD16?=/usr/bin/watcom/binl64/wlink
 
-# Find all C++ files in the cpp directory and convert them into .o files in the build directory
-CPP_SRC := $(wildcard c/*.cpp)
-CPP_OBJ := $(patsubst c/%.cpp,$(BUILD_DIR)/%.o,$(CPP_SRC))
+# Recursively find all C and ASM files in their respective directories
+SOURCES_C=$(shell find c -name '*.c')
+SOURCES_ASM=$(shell find asm -name '*.asm')
 
-# Find all C files in the c directory and convert them into .o files in the build directory
-C_SRC := $(wildcard c/*.c)
-C_OBJ := $(patsubst c/%.c,$(BUILD_DIR)/%.o,$(C_SRC))
+# Replace 'c/' or 'asm/' in the source path with 'build/stage2/c/' or 'build/stage2/asm/' for object file paths
+OBJECTS_C=$(patsubst c/%.c, $(BUILD_DIR)/stage2/c/%.obj, $(SOURCES_C))
+OBJECTS_ASM=$(patsubst asm/%.asm, $(BUILD_DIR)/stage2/asm/%.obj, $(SOURCES_ASM))
 
-# Find all assembly files in the asm directory and convert them into .o files in the build directory
-ASM_SRC := $(wildcard asm/*.asm)
-ASM_OBJ := $(patsubst asm/%.asm,$(BUILD_DIR)/%.o,$(ASM_SRC))
-
-.PHONY: all stage2 clean
+.PHONY: all stage2 clean always
 
 all: stage2
 
-# Link the stage2 binary from object files and generate a map file
-stage2: $(BUILD_DIR)/stage2.bin $(MAPFILE)
+stage2: $(BUILD_DIR)/stage2.bin
 
-$(BUILD_DIR)/stage2.bin: $(C_OBJ) $(CPP_OBJ) $(ASM_OBJ)
-	@mkdir -p $(BUILD_DIR)
-	@mkdir -p $(DEBUG_DIR)
-	$(LD) $(LDFLAGS) -o $@ $(C_OBJ) $(CPP_OBJ) $(ASM_OBJ)
-	$(LD) $(LDFLAGS) --Map=$(MAPFILE) -o $@ $(C_OBJ) $(CPP_OBJ) $(ASM_OBJ)
+# Link the objects to produce the binary
+$(BUILD_DIR)/stage2.bin: $(OBJECTS_ASM) $(OBJECTS_C)
+	$(LD16) NAME $(BUILD_DIR)/stage2.bin FILE \{ $(OBJECTS_ASM) $(OBJECTS_C) \} OPTION MAP=$(BUILD_DIR)/stage2.map @linker.lnk
 
-# Assemble the assembly files
-$(BUILD_DIR)/%.o: asm/%.asm
-	@mkdir -p $(BUILD_DIR)
-	$(ASM) $(ASMFLAGS) $< -o $@
+# Rule to compile C source files into object files, creating directories as needed
+$(BUILD_DIR)/stage2/c/%.obj: c/%.c always
+	@mkdir -p $(dir $@)
+	$(CC16) $(CFLAGS16) -fo=$@ $<
 
-# Compile all .cpp files into .o files in the build directory
-$(BUILD_DIR)/%.o: c/%.cpp
-	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+# Rule to assemble ASM source files into object files, creating directories as needed
+$(BUILD_DIR)/stage2/asm/%.obj: asm/%.asm always
+	@mkdir -p $(dir $@)
+	$(ASM) $(ASMFLAGS) -o $@ $<
 
-# Compile all .c files into .o files in the build directory
-$(BUILD_DIR)/%.o: c/%.c
-	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+always:
+	@mkdir -p $(BUILD_DIR)/stage2/c
+	@mkdir -p $(BUILD_DIR)/stage2/asm
 
-# Clean up the build directory
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -f $(BUILD_DIR)/stage2.bin
+	rm -rf $(BUILD_DIR)/stage2/c
+	rm -rf $(BUILD_DIR)/stage2/asm
