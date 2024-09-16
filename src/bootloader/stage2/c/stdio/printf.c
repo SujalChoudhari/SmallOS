@@ -16,7 +16,7 @@
 #define PRINTF_LENGTH_LONG_LONG 4
 
 int printf(const char *formatted_string, ...) {
-  int *argp = (int *)&formatted_string; // point to previous arg
+  int *argp = (int *)&formatted_string; // argument pointer (for pushing things onto stack)
   int state = PRINTF_STATE_NORMAL;
   int length = PRINTF_LENGTH_DEFAULT;
   int radix = 10;
