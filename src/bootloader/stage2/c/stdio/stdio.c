@@ -13,7 +13,7 @@ void puts(const char* str)
         putc(*str);
         str++;
     }
-    
+
 }
 
 void putln(const char* str)

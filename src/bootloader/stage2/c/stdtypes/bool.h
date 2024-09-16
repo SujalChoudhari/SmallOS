@@ -1,3 +1,4 @@
+#include "stdint.h"
 typedef u8 bool;
 
 #define false 0
