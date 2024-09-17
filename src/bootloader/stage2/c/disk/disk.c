@@ -1,6 +1,6 @@
 #include "disk.h"
 #include "../external/x86.h"
-#include "../types/bool.h"
+#include "../types/types.h"
 
 void Disk_lba_to_chs(Disk *disk, u32 lba, u16 *out_cylinder, u16 *out_sector,
                      u16 *out_head) {
@@ -30,7 +30,7 @@ bool Disk_init(Disk *disk, u8 driveNumber) {
   return true;
 }
 
-bool Disk_read_sectors(Disk *disk, u32 lba, u8 sectors, u8 far *out_data) {
+bool Disk_read_sectors(Disk *disk, u32 lba, u8 sectors, void far *out_data) {
   // convert from lba to chs
   u16 cylinder, sector, head;
   Disk_lba_to_chs(disk, lba, &cylinder, &sector, &head);

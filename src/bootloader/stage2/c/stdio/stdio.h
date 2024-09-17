@@ -1,5 +1,5 @@
 #pragma once
-#include "../types/bool.h"
+#include "../types/types.h"
 void  putc(char c);
 void puts(const char *str);
 int printf(const char *formatted_string, ...);
