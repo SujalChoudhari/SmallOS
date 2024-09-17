@@ -1,6 +1,6 @@
 #include "stdio/stdio.h"
-#include "stdtypes/bool.h"
-#include "stdtypes/stdint.h"
+#include "types/bool.h"
+#include "types/int.h"
 
 void _cdecl cstart_(u16 bootDrive) {
   const char far *far_str = "far string";

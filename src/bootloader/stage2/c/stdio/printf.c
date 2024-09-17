@@ -1,7 +1,7 @@
 #include "../external/x86.h"
 #include "../stdio/stdio.h"
-#include "../stdtypes/bool.h"
-#include "../stdtypes/stdint.h"
+#include "../types/bool.h"
+#include "../types/int.h"
 #include "stdio.h"
 #define PRINTF_STATE_NORMAL 0
 #define PRINTF_STATE_LENGTH 1

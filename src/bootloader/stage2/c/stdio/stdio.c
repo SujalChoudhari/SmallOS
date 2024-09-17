@@ -3,7 +3,7 @@
 
 void putc(char c)
 {
-    x86_Video_WriteCharTeletype(c, 0);
+    x86_video_write_char_teletype(c, 0);
 }
 
 void puts(const char* str)
