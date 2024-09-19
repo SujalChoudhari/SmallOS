@@ -70,6 +70,7 @@ bool read_root_directory(Disk *disk);
 /* Function implementations */
 
 bool read_boot_sector(Disk *disk) {
+  printf("[INFO] FAT: Reading boot sector");
   return Disk_read_sectors(disk, 0, 1, &g_data->BS.boot_sector_bytes);
 }
 
@@ -77,51 +78,41 @@ bool read_fat(Disk *disk) {
   return Disk_read_sectors(disk, g_data->BS.boot_sector.reserved_sectors,
                            g_data->BS.boot_sector.sectors_per_fat, g_fat);
 }
-
-// bool read_root_directory(Disk *disk) {
-//   u32 lba =
-//       g_data->BS.boot_sector.reserved_sectors +
-//       g_data->BS.boot_sector.sectors_per_fat *
-//       g_data->BS.boot_sector.fat_count;
-
-//   u32 size = sizeof(FATDirectoryEntry) *
-//   g_data->BS.boot_sector.dir_entry_count; u32 sectors = (size +
-//   g_data->BS.boot_sector.bytes_per_sector - 1) /
-//                 g_data->BS.boot_sector.bytes_per_sector;
-
-//   g_root_directory_end = lba + sectors;
-
-//   return Disk_read_sectors(disk, lba, sectors, g_root_directory);
-// }
-
 bool FATDirectoryEntry_init(Disk *disk) {
-  // Initialize FAT data structure
+  printf("[INFO] FAT: Starting initialization");
+
+  // // Initialize FAT data structure
   g_data = (FATData far *)MEMORY_FAT_ADDR;
+  printf("[INFO] FAT: Data structure initialized at %i\r\n", g_data);
 
   // Read the boot sector
   if (!read_boot_sector(disk)) {
-    printf("FAT: read boot sector failed\r\n");
+    printf("[ERROR] FAT: read boot sector failed");
     return false;
   }
+  printf("[INFO] FAT: Boot sector read successfully");
 
   // Calculate FAT location and size
   g_fat = (u8 far *)g_data + sizeof(FATData);
   u32 fat_size = g_data->BS.boot_sector.bytes_per_sector *
                  g_data->BS.boot_sector.sectors_per_fat;
+  printf("[INFO] FAT: FAT location: %p, size: %lu bytes", g_fat, fat_size);
 
   // Check if there's enough memory to read FAT
   if (sizeof(FATData) + fat_size >= MEMORY_FAT_SIZE) {
-    printf(
-        "FAT: Not enough memory to read FAT! Required %lu, only have %lu\r\n",
-        MEMORY_FAT_SIZE, sizeof(FATData) + fat_size);
+    printf("[ERROR] FAT: Not enough memory to read FAT! Required %lu, only "
+           "have %lu",
+           MEMORY_FAT_SIZE, sizeof(FATData) + fat_size);
     return false;
   }
+  printf("[INFO] FAT: Memory check passed");
 
   // Read the FAT
   if (!read_fat(disk)) {
-    printf("FAT: Read failed\r\n");
+    printf("[ERROR] FAT: Read failed");
     return false;
   }
+  printf("[INFO] FAT: FAT read successfully");
 
   // Calculate root directory size and location
   u32 root_dir_size =
@@ -129,6 +120,8 @@ bool FATDirectoryEntry_init(Disk *disk) {
   u32 root_lba =
       g_data->BS.boot_sector.reserved_sectors +
       g_data->BS.boot_sector.sectors_per_fat * g_data->BS.boot_sector.fat_count;
+  printf("[INFO] FAT: Root directory size: %lu bytes, LBA: %lu", root_dir_size,
+         root_lba);
 
   // Initialize root directory structure
   g_data->root_directory.opened = true;
@@ -140,24 +133,29 @@ bool FATDirectoryEntry_init(Disk *disk) {
       g_data->BS.boot_sector.dir_entry_count * sizeof(FATDirectoryEntry);
   g_data->root_directory.current_cluster = 0;
   g_data->root_directory.current_sector_in_cluster = 0;
+  printf("[INFO] FAT: Root directory structure initialized");
 
   // Read the first sector of root directory
   if (!Disk_read_sectors(disk, root_lba, 1, g_data->root_directory.buffer)) {
-    printf("FAT: Failed to read root directory\r\n");
+    printf("[ERROR] FAT: Failed to read root directory");
     return false;
   }
+  printf("[INFO] FAT: First sector of root directory read successfully");
 
   // calculate data section
   u32 root_dir_sectors =
       (root_dir_size + g_data->BS.boot_sector.bytes_per_sector - 1) /
       g_data->BS.boot_sector.bytes_per_sector;
   g_data_sector_lba = root_lba + root_dir_sectors;
+  printf("[INFO] FAT: Data section starts at LBA: %lu", g_data_sector_lba);
 
   // Initialize all file handles as closed
   for (int i = 0; i < MAX_FILE_HANDLES; i++) {
     g_data->opened_files[i].opened = false;
   }
+  printf("[INFO] FAT: All file handles initialized as closed");
 
+  printf("[INFO] FAT: Initialization completed successfully");
   return true;
 }
 
@@ -179,7 +177,7 @@ FATFile *open_entry(Disk *disk, FATDirectoryEntry *entry) {
   }
 
   if (!file) {
-    printf("FAT: No free file handles\r\n");
+    printf("FAT: No free file handles");
     return NULL;
   }
 
@@ -202,7 +200,7 @@ FATFile *open_entry(Disk *disk, FATDirectoryEntry *entry) {
   // Read the first sector of the directory
   u32 sector = FAT_cluster_to_lba(file_data->first_cluster);
   if (!Disk_read_sectors(disk, sector, 1, file_data->buffer)) {
-    printf("FAT: Failed to read directory cluster\r\n");
+    printf("FAT: Failed to read directory cluster");
     g_data->opened_files[file->handle].opened = false;
     return NULL;
   }
@@ -278,7 +276,7 @@ u32 FAT_read(Disk *disk, FATFile far *file, u32 byte_count, void *out_data) {
 
         // read next sector
         if (!Disk_read_sectors(disk, fd->current_cluster, 1, fd->buffer)) {
-          printf("FAT: read error!\r\n");
+          printf("FAT: read error!");
           break;
         }
       } else {
@@ -300,7 +298,7 @@ u32 FAT_read(Disk *disk, FATFile far *file, u32 byte_count, void *out_data) {
                                FAT_cluster_to_lba(fd->current_cluster) +
                                    fd->current_sector_in_cluster,
                                1, fd->buffer)) {
-          printf("FAT: read error!\r\n");
+          printf("FAT: read error!");
           break;
         }
       }
@@ -358,7 +356,7 @@ FATFile far *FAT_open(Disk *disk, const char *path) {
 
       // check if directory
       if (!isLast && (entry.attributes & FAT_ATTRIBUTE_DIRECTORY) == 0) {
-        printf("FAT: %s not a directory\r\n", name);
+        printf("FAT: %s not a directory", name);
         return NULL;
       }
 
@@ -369,7 +367,7 @@ FATFile far *FAT_open(Disk *disk, const char *path) {
         FAT_close(current);
       }
 
-      printf("FAT: %s not found\r\n", name);
+      printf("FAT: %s not found", name);
       return NULL;
     }
   }

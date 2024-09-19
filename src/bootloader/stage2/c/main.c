@@ -1,16 +1,33 @@
-#include "stdio/stdio.h"
-#include "types/bool.h"
-#include "types/int.h"
-
+#include "stdlib.h"
 void _cdecl cstart_(u16 bootDrive) {
-  const char far *far_str = "far string";
-  printf("Formatted %% %c %s %ls\r\n", 'a', "string", far_str);
-  printf("Formatted %d %i %x %p %o %hd %hi %hhu %hhd\r\n", 1234, -5678, 0xdead,
-         0xbeef, 012345, (short)27, (short)-42, (unsigned char)20,
-         (signed char)-10);
-  printf("Formatted %ld %lx %lld %llx\r\n", -100000000l, 0xdeadbeeful,
-         10200300400ll, 0xdeadbeeffeebdaedull);
 
+  Disk *disk;
+  if (!Disk_init(&disk, bootDrive)) {
+    printf("Disk init error %ld", bootDrive);
+    goto end;
+  }
+
+  if (!FATDirectoryEntry_init(&disk)) {
+    printf("FAT init error!");
+    goto end;
+  }
+
+  // FATFile *fd = FAT_open(&disk, "/");
+  // FATDirectoryEntry entry;
+
+  // printf("Files in root directory:\n");
+  // while (FAT_read_entry(&disk, fd, &entry) != 0) {
+  //   if (entry.name[0] == 0)
+  //     break;
+
+  //   if ((entry.attributes & FAT_ATTRIBUTE_DIRECTORY) == 0) {
+  //     printf("%s\n", entry.name);
+  //   }
+  // }
+
+  // FAT_close(&fd);
+
+end:
   while (true)
     ;
 }

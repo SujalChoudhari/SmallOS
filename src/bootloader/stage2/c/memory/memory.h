@@ -9,7 +9,7 @@
  * @param count Number of bytes to copy.
  * @return A pointer to the destination array.
  */
-int memcpy(void far *dest, const void far *src, u16 count);
+void far *memcpy(void far *dest, const void far *src, u16 count);
 
 /**
  * @brief Compares two blocks of memory.

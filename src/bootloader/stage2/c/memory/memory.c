@@ -1,13 +1,13 @@
 #include "memory.h"
 
-int memcpy(void far *destination, const void far *source, u16 count) {
+void far * memcpy(void far *destination, const void far *source, u16 count) {
   u8 far *dest_ptr = (u8 far *)destination;
   const u8 far *src_ptr = (const u8 far *)source;
 
   while (count--)
     *dest_ptr++ = *src_ptr++;
 
-  return 0;
+  return destination;
 }
 
 int memcmp(const void far *ptr1, const void far *ptr2, u16 count) {

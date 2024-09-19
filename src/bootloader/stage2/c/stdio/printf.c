@@ -2,6 +2,7 @@
 #include "../stdio/stdio.h"
 #include "../types/types.h"
 #include "stdio.h"
+
 #define PRINTF_STATE_NORMAL 0
 #define PRINTF_STATE_LENGTH 1
 #define PRINTF_STATE_LENGTH_SHORT 2
@@ -15,7 +16,7 @@
 #define PRINTF_LENGTH_LONG_LONG 4
 
 int printf(const char *formatted_string, ...) {
-  int *argp = (int *)&formatted_string; // argument pointer (for pushing things onto stack)
+  int *argp = (int *)&formatted_string;
   int state = PRINTF_STATE_NORMAL;
   int length = PRINTF_LENGTH_DEFAULT;
   int radix = 10;
@@ -91,33 +92,40 @@ int printf(const char *formatted_string, ...) {
       case 'D':
         radix = 10;
         sign = true;
-        printf_number(argp, length, sign, radix);
+        argp = printf_number(argp, length, sign, radix);
         break;
 
       case 'u':
       case 'U':
         radix = 10;
         sign = false;
-        printf_number(argp, length, sign, radix);
+        argp = printf_number(argp, length, sign, radix);
         break;
 
       case 'x':
       case 'X':
+        radix = 16;
+        sign = false;
+        argp = printf_number(argp, length, sign, radix);
+        break;
+
       case 'p':
       case 'P':
         radix = 16;
         sign = false;
-        printf_number(argp, length, sign, radix);
+        length = PRINTF_LENGTH_LONG; // Ensure pointer is treated as long
+        puts("0x");
+        argp = printf_number(argp, length, sign, radix);
         break;
 
       case 'o':
       case 'O':
         radix = 8;
         sign = false;
-        printf_number(argp, length, sign, radix);
+        argp = printf_number(argp, length, sign, radix);
         break;
       default:
-        // for now ignore any invalid thigs, later will give warnings
+        // for now ignore any invalid things, later will give warnings
         break;
       }
 
@@ -129,7 +137,7 @@ int printf(const char *formatted_string, ...) {
     }
     formatted_string++;
   }
-
+  puts("\r\n");
   return 0;
 }
 
@@ -184,7 +192,7 @@ int *printf_number(int *argp, int length, bool sign, int radix) {
     } else {
       number = *(unsigned long long int *)argp;
     }
-    argp += 4;
+    argp += 2;
     break;
   }
 
