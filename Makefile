@@ -48,10 +48,10 @@ $(BUILD_DIR)/kernel.bin: always
 #
 # Tools
 #
-tools_fat: $(BUILD_DIR)/tools/fat
-$(BUILD_DIR)/tools/fat: always tools/fat/fat.c
-	@mkdir -p $(BUILD_DIR)/tools
-	@$(MAKE) -C tools/fat BUILD_DIR=$(abspath $(BUILD_DIR))
+# tools_fat: $(BUILD_DIR)/tools/fat
+# $(BUILD_DIR)/tools/fat: always tools/fat/fat.c
+# 	@mkdir -p $(BUILD_DIR)/tools
+# 	@$(MAKE) -C tools/fat BUILD_DIR=$(abspath $(BUILD_DIR))
 
 #
 # Always
