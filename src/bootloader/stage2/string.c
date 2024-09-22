@@ -1,5 +1,6 @@
 #include "string.h"
-#include "stdint.h"
+#include <stdint.h>
+#include <stddef.h>
 
 const char* strchr(const char* str, char chr)
 {
@@ -36,7 +37,7 @@ char* strcpy(char* dst, const char* src)
         ++src;
         ++dst;
     }
-
+    
     *dst = '\0';
     return origDst;
 }
