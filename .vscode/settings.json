@@ -3,4 +3,11 @@
         "stdint.h": "c",
         "bool.h": "c"
     },
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/sujal/Projects/SmallOS",
+            "binaryPath": "/home/sujal/Projects/SmallOS/run.sh",
+            "binaryArgs": []
+        }
+    ],
 }
