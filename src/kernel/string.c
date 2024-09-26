@@ -136,3 +136,34 @@ bool includes(const char *str1, const char *str2)
     }
     return false; // str2 was not found in str1
 }
+
+char *strrchr(const char *str, int ch)
+{
+    char *last_occurrence = NULL;
+    while (*str != '\0')
+    {
+        if (*str == (char)ch)
+        {
+            last_occurrence = (char *)str;
+        }
+        str++;
+    }
+    return last_occurrence;
+}
+
+char *strcat(char *dest, const char *src)
+{
+    char *dest_ptr = dest;
+    while (*dest_ptr != '\0')
+    {
+        dest_ptr++;
+    }
+    while (*src != '\0')
+    {
+        *dest_ptr = *src;
+        dest_ptr++;
+        src++;
+    }
+    *dest_ptr = '\0'; // Null-terminate the resulting string
+    return dest;
+}
